@@ -38,6 +38,6 @@ func InitLogger() {
 }
 
 // GetLogger returns the configured logger
-func GetLogger() *zerolog.Logger {
-    return &Logger
+func GetLogger() zerolog.Logger {
+    return Logger
 }

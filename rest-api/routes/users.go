@@ -34,6 +34,7 @@ func login(context *gin.Context) {
 	}
 
 	err = user.Authenticate()
+	
 	if err != nil {
 		utils.HandleError(context, http.StatusUnauthorized, err)
 		return

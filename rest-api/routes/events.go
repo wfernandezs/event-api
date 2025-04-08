@@ -40,6 +40,7 @@ func createEvent(context *gin.Context) {
 		return
 	}
 
+	event.UserID = context.GetInt64("userId")
 	err = event.Save()
 	if err != nil {
 		utils.HandleError(context, http.StatusInternalServerError, err)

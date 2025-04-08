@@ -33,7 +33,7 @@ func (u *User) Save() error {
 	return nil
 }
 
-func (u User) Authenticate() error {
+func (u *User) Authenticate() error {
 	query := `SELECT id, password FROM users WHERE email = ?`
 	row := db.DB.QueryRow(query, u.Email)
 
