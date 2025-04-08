@@ -56,11 +56,18 @@ func updateEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEvent(eventId)
+	userId := context.GetInt64("userId")
+	event, err := models.GetEvent(eventId)
 	if err != nil {
 		utils.HandleError(context, http.StatusInternalServerError, err)
 		return
 	}
+
+	if event.UserID != userId {
+		utils.HandleError(context, http.StatusForbidden, err)
+		return
+	}
+
 
 	var updateEvent models.Event
 	err = context.ShouldBindJSON(&updateEvent)
@@ -85,11 +92,19 @@ func deleteEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEvent(eventId)
+	userId := context.GetInt64("userId")
+	event, err := models.GetEvent(eventId)
+
+
 	if err != nil {
 		utils.HandleError(context, http.StatusInternalServerError, err)
 		return
 	}
+
+	if event.UserID != userId {
+		utils.HandleError(context, http.StatusForbidden, err)
+		return
+	}	
 
 	var deleteEvent models.Event
 	deleteEvent.ID = eventId
