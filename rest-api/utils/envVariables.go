@@ -3,7 +3,18 @@ package utils
 import (
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
+
+// LoadEnv loads environment variables from .env file
+func LoadEnv() {
+    err := godotenv.Load()
+    if err != nil {
+        logger := GetLogger()
+        logger.Warn().Msg("Error loading .env file, using system environment variables")
+    }
+}
 
 // GetEnv retrieves an environment variable or returns a default value if not found
 func GetEnv(key, defaultValue string) string {

@@ -59,4 +59,6 @@ bin/
 # Project-specific files
 rest-api
 
-*.db
+data/
+
+__debug_*

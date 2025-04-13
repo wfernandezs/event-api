@@ -2,25 +2,36 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/joho/godotenv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wfernandez/rest-api/db"
+	"github.com/wfernandez/rest-api/models"
 	"github.com/wfernandez/rest-api/routes"
 	"github.com/wfernandez/rest-api/utils"
 )
 
 func main() {
-	godotenv.Load() 
+	utils.LoadEnv()
 	utils.InitLogger()
 	logger := utils.GetLogger()
 	port := utils.GetEnv("PORT", "8080")
 
 	logger.Info().Msg("Starting application")
 	
-	db.InitDB() // Initialize the database
-	logger.Info().Msg("Database initialized")
+	// Initialize database
+	gormDB := db.GetInstance().DB
+	
+	// List all models being migrated
+	modelNames := models.ListRegisteredModels()
+	logger.Info().Msgf("Migrating models: %s", strings.Join(modelNames, ", "))
+	
+	// Auto-migrate all registered models
+	if err := gormDB.AutoMigrate(models.GetRegisteredModels()...); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to run migrations")
+	}
+	
+	logger.Info().Msg("Database migrations completed successfully")
 	
 	server := gin.Default()
 	

@@ -7,10 +7,17 @@ import (
 	"github.com/wfernandez/rest-api/utils"
 )
 
+func init() {
+	RegisterModel(&User{})
+}
+
 type User struct {
-	ID       int64  
-	Email 	 string `binding:"required"`
-	Password string `binding:"required"`
+	ID       int64  `gorm:"primaryKey"`
+	Email 	 string `binding:"required" gorm:"not null;unique"`
+	Password string `binding:"required" gorm:"not null"`
+
+  Registrations []Registration `gorm:"foreignKey:UserID" json:"registrations,omitempty"`  
+  Events        []Event        `gorm:"many2many:registrations;joinForeignKey:UserID;joinReferences:EventID" json:"events,omitempty"`	
 }
 
 func (u *User) Save() error {
