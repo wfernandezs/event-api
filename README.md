@@ -71,6 +71,31 @@ go run main.go
 
 The server will start on port 8080 (or the port specified in your .env file).
 
+### Running Swagger Documentation
+
+The API comes with Swagger documentation that provides an interactive API reference. To access it:
+
+1. Run the Swagger documentation server:
+
+```bash
+go run swagger-server/main.go
+```
+
+2. Access the Swagger UI in your browser at:
+
+```
+http://localhost:8081/swagger/
+```
+
+By default, the Swagger server runs on port 8081. You can customize this by specifying a `SWAGGER_PORT` environment variable.
+
+The Swagger UI provides:
+
+- Interactive documentation for all API endpoints
+- Request/response examples
+- The ability to execute API calls directly from the browser
+- OpenAPI specification at `/openapi.yaml`
+
 ## API Endpoints
 
 ### Authentication
@@ -215,7 +240,9 @@ Authorization: Bearer <JWT_TOKEN>
 │   ├── routes.go        # Route setup
 │   └── users.go         # User endpoints
 ├── swagger/             # Swagger UI setup
-│   └── server.go
+│   └── server.go        # Swagger server implementation
+├── swagger-server/      # Standalone Swagger server
+│   └── main.go          # Entry point for Swagger server
 ├── utils/               # Utility functions
 │   ├── envVariables.go  # Environment variable utilities
 │   ├── hash.go          # Password hashing
@@ -240,6 +267,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 - `PORT` - Server port (default: 8080)
 - `JWT_SECRET` - Secret key for JWT signing
+- `SWAGGER_PORT` - Port for Swagger documentation server (default: 8081)
 
 ## License
 
