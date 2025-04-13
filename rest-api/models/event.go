@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/wfernandez/rest-api/db"
@@ -34,6 +35,7 @@ func (e *Event) Save() error {
 func GetAllEvents()	([]Event, error) {
 	var events []Event
 	result := db.GetInstance().DB.Find(&events)
+	fmt.Println(events)
 	if result.Error != nil {
 		return nil, result.Error
 	}

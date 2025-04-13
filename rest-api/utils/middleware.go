@@ -1,34 +1,45 @@
 package utils
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
-// AppError represents a structured error that can be returned by handlers
 type AppError struct {
 	StatusCode int
 	Message    string
 	Error      error
 }
 
-// ErrorHandlerMiddleware catches panics and provides a consistent error response
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Execute subsequent middleware/handler
 		defer func() {
 			if err := recover(); err != nil {
-				// Log the error
-				log.Printf("Panic occurred: %v", err)
+				logger := GetLogger()
+				
+				var stackTracer stackTracer
+				var errObj error
+				
+				switch e := err.(type) {
+				case error:
+					errObj = e
+					logger.Error().Err(e).Msg("Panic occurred")
+				default:
+					errObj = fmt.Errorf("%v", err)
+					logger.Error().Interface("panic", err).Msg("Panic occurred")
+				}
+				
+				if errors.As(errObj, &stackTracer) {
+					logger.Error().Msg(fmt.Sprintf("Stack trace:\n%+v", stackTracer))
+				}
 
-				// Return a 500 internal server error
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "An unexpected error occurred",
 				})
 
-				// Abort the request
 				c.Abort()
 			}
 		}()
@@ -36,15 +47,23 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
 
-// HandleAppError processes structured application errors
 func HandleAppError(c *gin.Context, appErr AppError) {
-	// Log the error if available
+	logger := GetLogger()
+	
 	if appErr.Error != nil {
-		log.Printf("Error: %v", appErr.Error)
+		var stackTracer stackTracer
+		if errors.As(appErr.Error, &stackTracer) {
+			logger.Error().Err(appErr.Error).Msg(appErr.Message)
+			logger.Error().Msg(fmt.Sprintf("Stack trace:\n%+v", stackTracer))
+		} else {
+			logger.Error().Err(appErr.Error).Msg(appErr.Message)
+		}
 	}
 
-	// Return JSON response with appropriate status code
 	c.JSON(appErr.StatusCode, gin.H{
 		"error": appErr.Message,
 	})

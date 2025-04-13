@@ -1,8 +1,7 @@
 package models
 
 import (
-	"errors"
-
+	"github.com/pkg/errors"
 	"github.com/wfernandez/rest-api/db"
 	"github.com/wfernandez/rest-api/utils"
 )
@@ -21,38 +20,28 @@ type User struct {
 }
 
 func (u *User) Save() error {
-	query := `INSERT INTO users (email, password) VALUES (?, ?)`
-	stmt, err := db.DB.Prepare(query)
+	hashedPassword, err := utils.HashPassword(u.Password)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to hash password")
 	}
-	defer stmt.Close()
-	hashedPassword, _ := utils.HashPassword(u.Password)
-	result, err := stmt.Exec(u.Email, hashedPassword)
-	if err != nil {
-		return err
+	u.Password = hashedPassword
+
+	if err := db.GetInstance().DB.Create(u).Error; err != nil {
+		return errors.Wrap(err, "failed to create user")
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-	u.ID = id
 	return nil
 }
 
 func (u *User) Authenticate() error {
-	query := `SELECT id, password FROM users WHERE email = ?`
-	row := db.DB.QueryRow(query, u.Email)
+	var user User
+	if err := db.GetInstance().DB.Where("email = ?", u.Email).First(&user).Error; err != nil {
+		return errors.Wrap(err, "invalid credentials")
+	}
 
-	var retrievedPassword string
-	err := row.Scan(&u.ID, &retrievedPassword)
-
-	if err != nil {
+	if !utils.CheckPasswordHash(u.Password, user.Password) {
 		return errors.New("invalid credentials")
 	}
 
-	if !utils.CheckPasswordHash(u.Password, retrievedPassword) {
-		return errors.New("invalid credentials")
-	}
+	u.ID = user.ID
 	return nil
 }

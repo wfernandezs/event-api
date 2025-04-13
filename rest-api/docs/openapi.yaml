@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: REST API
+  description: REST API for event management
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Events
+    description: Event operations
+  - name: Authentication
+    description: Authentication operations
+paths:
+  /events:
+    get:
+      summary: Get all events
+      description: Retrieve a list of all available events
+      tags:
+        - Events
+      responses:
+        "200":
+          description: A list of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Create a new event
+      description: Create a new event (requires authentication)
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /events/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID of the event
+    get:
+      summary: Get event by ID
+      description: Retrieve detailed information about an event
+      tags:
+        - Events
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      summary: Update an event
+      description: Update an existing event (requires authentication)
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "200":
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete an event
+      description: Delete an existing event (requires authentication)
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Event deleted successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /events/{id}/register:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID of the event to register for
+    post:
+      summary: Register for an event
+      description: Register the authenticated user for an event
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Registration successful
+        "400":
+          description: User already registered for this event
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Cancel registration for an event
+      description: Cancel registration for an event
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Registration cancelled successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: User is not registered for this event
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /signup:
+    post:
+      summary: Register a new user
+      description: Create a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSignup"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /login:
+    post:
+      summary: Login
+      description: Authenticate a user and receive a token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: Invalid credentials
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Tech Conference 2023
+        description:
+          type: string
+          example: A conference about the latest technologies
+        location:
+          type: string
+          example: San Francisco Convention Center
+        dateTime:
+          type: string
+          format: date-time
+          example: "2023-12-15T18:00:00Z"
+        userId:
+          type: integer
+          example: 1
+        registrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Registration"
+        attendees:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+    EventInput:
+      type: object
+      required:
+        - name
+        - description
+        - location
+        - dateTime
+      properties:
+        name:
+          type: string
+          example: Tech Conference 2023
+        description:
+          type: string
+          example: A conference about the latest technologies
+        location:
+          type: string
+          example: San Francisco Convention Center
+        dateTime:
+          type: string
+          format: date-time
+          example: "2023-12-15T18:00:00Z"
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+    Registration:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        userId:
+          type: integer
+    UserSignup:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: securepassword123
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: securepassword123
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        userId:
+          type: integer
+          example: 1
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
